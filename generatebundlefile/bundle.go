@@ -26,12 +26,12 @@ type BundleGenerateOpt func(config *BundleGenerate)
 // Used for generating yaml for generating a new crd sample file
 func NewBundleGenerate(bundleName string, opts ...BundleGenerateOpt) *BundleNoStatus {
 	clusterConfig := &BundleNoStatus{
-		PackageBundle: &api.PackageBundle{
+		PackageBundleNoTimestamp: &PackageBundleNoTimestamp{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       api.PackageBundleKind,
 				APIVersion: SchemeBuilder.GroupVersion.String(),
 			},
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMetaNoTimestamp: ObjectMetaNoTimestamp{
 				Name:      bundleName,
 				Namespace: api.PackageNamespace,
 			},
@@ -86,12 +86,12 @@ func (projects Project) NewPackageFromInput() (*api.BundlePackage, error) {
 func AddMetadata(s api.PackageBundleSpec, name string) BundleNoStatus {
 	bundleName := name
 	b := &BundleNoStatus{
-		PackageBundle: &api.PackageBundle{
+		PackageBundleNoTimestamp: &PackageBundleNoTimestamp{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       api.PackageBundleKind,
 				APIVersion: SchemeBuilder.GroupVersion.String(),
 			},
-			ObjectMeta: metav1.ObjectMeta{
+			ObjectMetaNoTimestamp: ObjectMetaNoTimestamp{
 				Name:      bundleName,
 				Namespace: api.PackageNamespace,
 			},
@@ -103,7 +103,7 @@ func AddMetadata(s api.PackageBundleSpec, name string) BundleNoStatus {
 }
 
 func IfSignature(bundle *BundleNoStatus) (bool, error) {
-	annotations := bundle.PackageBundle.ObjectMeta.Annotations
+	annotations := bundle.ObjectMetaNoTimestamp.Annotations
 	if annotations != nil {
 		return true, nil
 	}
@@ -118,7 +118,7 @@ func AddSignature(bundle *BundleNoStatus, signature string) (*BundleNoStatus, er
 	annotations = map[string]string{
 		sig.FullSignatureAnnotation: signature,
 	}
-	bundle.PackageBundle.ObjectMeta.Annotations = annotations
+	bundle.ObjectMetaNoTimestamp.Annotations = annotations
 	return bundle, nil
 }
 
@@ -130,7 +130,7 @@ func CheckSignature(bundle *BundleNoStatus, signature string) (bool, error) {
 		sig.FullSignatureAnnotation: signature,
 	}
 	//  If current signature on file isn't at the --signature input return false, otherwsie true
-	if annotations[sig.FullSignatureAnnotation] != bundle.PackageBundle.ObjectMeta.Annotations[sig.FullSignatureAnnotation] {
+	if annotations[sig.FullSignatureAnnotation] != bundle.ObjectMetaNoTimestamp.Annotations[sig.FullSignatureAnnotation] {
 		return false, fmt.Errorf("A signature already exists on the input file signatue")
 	}
 	return true, nil

@@ -94,7 +94,7 @@ func validateBundleName(bundle *BundleNoStatus) error {
 
 func ValidateBundleNoSignature(bundle *BundleNoStatus) error {
 	// Check if Projects are listed
-	if len(bundle.PackageBundle.Spec.Packages) < 1 {
+	if len(bundle.Spec.Packages) < 1 {
 		return fmt.Errorf("Should use non-empty list of projects for input")
 	}
 	return nil
