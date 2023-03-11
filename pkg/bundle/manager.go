@@ -221,7 +221,7 @@ func (m *bundleManager) ProcessBundleController(ctx context.Context, pbc *api.Pa
 			return fmt.Errorf("updating %s status to %s: %s", pbc.Name, pbc.Status.State, err)
 		}
 	default:
-		if pbc.Spec.ActiveBundle != "" {
+		if pbc.Spec.ActiveBundle != "" && m.checkNamespace(ctx, pbc.Name, api.PackageNamespace) {
 			pbc.Status.State = api.BundleControllerStateActive
 			m.log.V(6).Info("update", "PackageBundleController", pbc.Name, "state", pbc.Status.State)
 			pbc.Status.Detail = ""
@@ -231,6 +231,9 @@ func (m *bundleManager) ProcessBundleController(ctx context.Context, pbc *api.Pa
 				return fmt.Errorf("updating %s status to %s: %s", pbc.Name, pbc.Status.State, err)
 			}
 		} else {
+			if err := m.targetClient.CreateClusterNamespace(ctx, pbc.Name); err != nil {
+				return err
+			}
 			pbc.Spec.ActiveBundle = latestBundle.Name
 			m.log.V(6).Info("update", "PackageBundleController", pbc.Name, "activeBundle", pbc.Spec.ActiveBundle)
 			pbc.Status.Detail = ""
@@ -242,4 +245,13 @@ func (m *bundleManager) ProcessBundleController(ctx context.Context, pbc *api.Pa
 	}
 
 	return nil
+}
+
+func (m *bundleManager) checkNamespace(ctx context.Context, clusterName, namespace string) bool {
+	if err := m.targetClient.Initialize(ctx, clusterName); err != nil {
+		m.log.V(6).Error(err, "initializing target client")
+		return false
+	}
+
+	return m.targetClient.CheckNamespace(ctx, namespace)
 }
